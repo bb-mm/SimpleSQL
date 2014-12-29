@@ -493,7 +493,7 @@ RC Test1(void)
 {
     RC            rc;
     RM_FileHandle fh;
-
+    printf("bbmm\n");
     printf("test1 starting ****************\n");
 
     if ((rc = CreateFile(FILENAME, sizeof(TestRec))) ||

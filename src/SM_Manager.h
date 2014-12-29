@@ -3,38 +3,23 @@
 #include "pf.h"
 #include "redbase.h"
 #include "rm.h"
-// Used by SM_Manager::CreateTable
-   struct AttrInfo {
-      char     *attrName;           // Attribute name
-      AttrType attrType;            // Type of attribute
-      int      attrLength;          // Length of attribute
-   };
-   typedef struct RelaEntry {
-	   char relName[MAXNAME + 1];
-	     int tupleLength;
-	     int attrCount;
-	     int numTuples;
-   } RelaEntry;
-   typedef struct AttrEntry {
-	   char relName[MAXNAME + 1];
-	     char attrName[MAXNAME +1];
-	     int offset;
-	     AttrType attrType;
-	     int attrLength;
-	     int attrNum;
-	     int numDistinct;
-	     float maxValue;
-	     float minValue;
-   }AttrEntry;
-   // Used by Printer class
-   struct DataAttrInfo {
-      char     relName[MAXNAME+1];  // Relation name
-      char     attrName[MAXNAME+1]; // Attribute name
-      int      offset;              // Offset of attribute
-      AttrType attrType;            // Type of attribute
-      int      attrLength;          // Length of attribute
-      //int      indexNo;             // Attribute index number
-   };
+// Define the catalog entry for a relation
+typedef struct RelCatEntry{
+  char relName[MAXNAME + 1];
+  int tupleLength;
+  int attrCount;
+} RelCatEntry;
+
+// Define catalog entry for an attribute
+typedef struct AttrCatEntry{
+  char relName[MAXNAME + 1];
+  char attrName[MAXNAME +1];
+  int offset;
+  AttrType attrType;
+  int attrLength;
+  int attrNum;
+} AttrCatEntry;
+
 
    class SM_Manager {
        public:
@@ -46,18 +31,38 @@
                          int        attrCount,
                          AttrInfo   *attributes);
          int DropTable   (const char *relName);               // Destroy relation
-         int CreateIndex (const char *relName,                // Create index
-                         const char *attrName);
-         int DropIndex   (const char *relName,                // Destroy index
-                         const char *attrName);
-         int Load        (const char *relName,                // Load utility
-                         const char *fileName);
-         int Help        ();                                  // Help for database
-         int Help        (const char *relName);               // Help for relation
-         int Print       (const char *relName);               // Print relation
-         int Set         (const char *paramName,              // Set system parameter
-                         const char *value);
+//         int CreateIndex (const char *relName,                // Create index
+//                         const char *attrName);
+//         int DropIndex   (const char *relName,                // Destroy index
+//                         const char *attrName);
+//         int Load        (const char *relName,                // Load utility
+//                         const char *fileName);
+//         int Help        ();                                  // Help for database
+//         int Help        (const char *relName);               // Help for relation
+//         int Print       (const char *relName);               // Print relation
+//         int Set         (const char *paramName,              // Set system parameter
+//                         const char *value);
        private:
+         bool isValidAttrType(AttrInfo attribute);
+         // Inserts an entry about specified relName relation into relcat
+         int InsertRelCat(const char *relName, int attrCount, int recSize);
+
+           // Insert an entry about specified attribute into attrcat
+         int InsertAttrCat(const char *relName, AttrInfo attr, int offset, int attrNum);
+           // Retrieve the record and data associated with a relation entry. Return
+           // error if one doesnt' exist
+         int GetRelEntry(const char *relName, RM_Record &relRec, RelCatEntry *&entry);
+
+           // Finds the entry associated with a particular attribute
+         int FindAttr(const char *relName, const char *attrName, RM_Record &attrRec, AttrCatEntry *&entry);
+         // Given a RelCatEntry, it populates aEntry with information about all its attribute.
+           // While doing so, it also updates the attribute-to-relation mapping
+         int GetAttrForRel(RelCatEntry *relEntry, AttrCatEntry *aEntry, std::map<std::string, std::set<std::string> > &attrToRel);
+           // Given a list of relations, it retrieves all the relCatEntries associated with them placing
+           // them in the list specified by relEntries. It also returns the total # of attributes in all the
+           // relations combined, and populates the mapping from relation name to index number in relEntries
+         int GetAllRels(RelCatEntry *relEntries, int nRelations, const char * const relations[],
+             int &attrCount, std::map<std::string, int> &relToInt);
 
          RM_Manager& rmm;
          bool DBOpen;
